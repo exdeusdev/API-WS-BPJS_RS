@@ -1,5 +1,10 @@
 # API-WS-BPJS_RS
 
+Memerlukan:
+- Webserver; AppServ/Xampp/etc
+- PHP v5.6+
+
+# Detail
 A simple library to encode and decode JSON Web Tokens (JWT) in PHP, conforming to [RFC 7519](https://tools.ietf.org/html/rfc7519).
 
 Dibuat khusus untuk BPJS API Caller terhadap API Webservice Rumah Sakit
