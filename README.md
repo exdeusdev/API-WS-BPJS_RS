@@ -19,8 +19,8 @@ $HOST_BPJS                  = 'https://bpjs-kesehatan.go.id/'; // silahkan sesua
 // Database
 $MYSQL_HOST		    = 'localhost';  // IP atau localhost
 $MYSQL_PORT		    = '3306';       // MySQL Port
-$MYSQL_USER		    = 'root';       // MySQL Username
-$MYSQL_PASS		    = 'xzxzxzxz';   // MySQL Password
+$MYSQL_USER		    = 'user';       // MySQL Username
+$MYSQL_PASS		    = 'password';   // MySQL Password
 $MYSQL_DB		    = 'simrs_db'; // MySQL Database
 
 ?>
