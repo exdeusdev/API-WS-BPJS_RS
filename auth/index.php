@@ -1,4 +1,11 @@
 <?php
+/* API Service
+ *
+ * BPJS API Caller - RS API Webservice
+ * 
+ * Copyright, 2020. dr. Diko Aprilio
+ */
+
 // Display Error
 error_reporting(E_ALL);
 ini_set('display_errors', 'On');
@@ -11,6 +18,7 @@ date_default_timezone_set("Asia/Jakarta");
 // Load Library
 require_once '../vendor/autoload.php';
 require_once '../database/config.php';
+require_once '../function/function.php';
 
 
 // Headers
@@ -21,12 +29,12 @@ header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Origin, x-username, x-password");
 
 
-// Load JWT
+// Load JWT & Custom Class
 use \Firebase\JWT\JWT;
+use \Exdeus\JWT\EX;
 
 
 // Define variable
-$KEY = $SECRET_KEY;
 $headers = apache_request_headers();
 $data = array(
     'username' => (isset($headers['X-Username']) ? $headers['X-Username'] : $headers['x-username']),
@@ -43,7 +51,7 @@ $data = (object)$data;
 // silahkan comment code di bawah ini
 // !*START!
 if ($data->remoteaddr != $HOST_BPJS) {
-    response (NULL, "Autentikasi gagal: invalid remote address", 202);
+    EX::response(NULL, "Autentikasi gagal: invalid remote address", 202);
 }
 // !*END*!
 
@@ -65,48 +73,32 @@ elseif (isset($data->username) && isset($data->password)) {
 
 		if ($total_results > 0) {
             $row = $stmt->fetchObject();
-            
-            // Generate expire token
-            $expiretime = strtotime('+15 minutes');
 
             $PAYLOAD = [
                 "username" => $row->username,
                 "password" => $row->password,
-                "expire" => $expiretime
+                "exp" => $expiretime
 			];
 
             $JWT        = JWT::encode($PAYLOAD, $KEY);
             // $DECODED    = JWT::decode($JWT, $KEY, array('HS256'));
 			
-            response($JWT, "OK", 200);
+            EX::response($JWT, "OK", 200);
 	
 			// Clear db
 			$stmt->closeCursor();
 			$db = null;
             
 		} else {
-			response(NULL, "Autentikasi gagal: username atau password salah", 202);
+			EX::response(NULL, "Autentikasi gagal: username atau password salah", 202);
 		}	
 	
 	} catch(PDOException $e) {
-		    response (NULL, $e->getMessage(), 400);
+		// Jika terdapat error maka akan ditampilkan dalam format JSON
+		EX::response(NULL, $e->getMessage(), 400);
 	}
 	
 } else {
-	response(NULL, "X-Username atau X-Password tidak ada", 202);
-}
-
-function response($token, $message, $code){
-	http_response_code($code);
-	$response = [
-		'response' => [ 'token' => $token ],
-		'metadata' => [
-			'message' => $message,
-			'code' => $code
-		]
-	];
-
-	$json_response = json_encode($response ,JSON_PRETTY_PRINT);
-	echo $json_response;
+	EX::response(NULL, "X-Username atau X-Password tidak ada", 202);
 }
 ?>

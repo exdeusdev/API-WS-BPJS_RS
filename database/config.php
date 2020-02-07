@@ -1,6 +1,17 @@
 <?php
+/* API Service
+ *
+ * BPJS API Caller - RS API Webservice
+ * 
+ * Copyright, 2020. dr. Diko Aprilio
+ */
+
 // Secret Key
-$SECRET_KEY                 = 'EXDEUS';
+$KEY                        = 'EXDEUS';
+
+// Generate expire token
+$expiretime                 = strtotime('+15 minutes');
+
 // Host BPJS
 $HOST_BPJS                  = 'https://bpjs-kesehatan.go.id/';
 

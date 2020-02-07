@@ -42,6 +42,7 @@ $data = array(
 	'remoteaddr' => (isset($headers['Origin']) ? $headers['Origin'] : $headers['origin'])
 );
 
+
 // Menerima semua request melalui POST/GET
 $body = file_get_contents('php://input');
 if (!empty($body)) {
@@ -54,15 +55,16 @@ $headers = apache_request_headers();
 $res = array(
     'nomorkartu' => $res['nomorkartu'],
     'nik' => $res['nik'],
-    'nomorrm' => $res['nomorrm'],
-    'notelp' => $res['notelp'],
-	'tanggalperiksa' => $res['tanggalperiksa'],
 	'kodepoli' => $res['kodepoli'],
-	'nomorreferensi' => $res['nomorreferensi'],
-	'jenisreferensi' => $res['jenisreferensi'],
-	'jenisrequest' => $res['jenisrequest'],
-	'polieksekutif' => $res['polieksekutif']
+	'tanggalperiksa' => $res['tanggalperiksa']
 );
+
+// {
+//     "nomorkartu": "00012345678",
+//     "nik": "3212345678987654",
+//     "kodepoli": "001",
+//     "tanggalperiksa": "2020-01-28"
+// }
 
 // Return array to Object data
 $data   = (object)$data;
@@ -79,6 +81,7 @@ if ($data->remoteaddr != $HOST_BPJS) {
 
 // Pastikan bahwa username dan password tidak kosong/null
 elseif (isset($data->username) && isset($data->token)) {
+    
     try {
         // $JWT    = JWT::encode($PAYLOAD, $KEY);
         $JWT    = JWT::decode($data->token, $KEY, array('HS256'));
@@ -99,7 +102,7 @@ elseif (isset($data->username) && isset($data->token)) {
             // Jika ingin lebih secure tambahkan timestamp; time()
             try {
                 // kalau beda tabel silahkan pakai INNER/LEFT/RIGHT/OUTER JOIN sesuai style masing masing
-                $stmt = $db->query("SELECT A.nomorantrean, A.kodebooking, A.jenisantrean, C.namapoli, C.namadokter
+                $stmt = $db->query("SELECT A.nomorantrean, A.keterangan, B.tanggalantrean, B.sisaantrean, B.antreanpanggil, C.namapoli, C.kodepolihuruf
                                     FROM tbl_kunjungan AS A
                                     INNER JOIN tbl_antrean AS B ON B.tanggalantrean = A.tanggalperiksa
                                     INNER JOIN tbl_poli AS C ON A.kodepoli = C.kodepoli
@@ -109,26 +112,30 @@ elseif (isset($data->username) && isset($data->token)) {
 
                 $total_results = $stmt->rowCount();
         
-                // estimasi dilayani
-                // kalkulasikan sendiri berdasarkan tabel lain jika punya,
-                // contoh: log antrian sebelumnya (setiap panggilan punya timestamp, dan bisa dijadikan average interval)
-                function estimasidilayani() {
-                    // Baris kode kalkulasi
-                    $est = 'CODE';
-
-                    return $est;
-                }
-
                 if ($total_results > 0) {
                     $row = $stmt->fetchObject();
+                    
+                    $angkaantrean = preg_replace('/\D/', '', $row->nomorantrean);
+
+                    // Jika nomor antrian pasien sudah terlewati,
+                    // variabel keterangan diganti menjadi "Nomor antrian anda sudah terlewat"
+                    if ($row->antreanpanggil > (int)$angkaantrean) {
+                        $row->keterangan = "Nomor antrian anda sudah terlewat, harap mengambil antrean kembali.";
+                    }
+
+                    // Jika angka antrean panggil kurang dari 10
+                    // ditambahkan angka 0 di depannya --- Cara simpel
+                    if ($row->antreanpanggil < 10) {
+                        $row->antreanpanggil = "0".$row->antreanpanggil;
+                    }
         
                     $response = [
                         "nomorantrean" => $row->nomorantrean,
-                        "kodebooking" => $row->kodebooking,
-                        "jenisantrean" => $row->jenisantrean,
-                        "estimasidilayani" => estimasidilayani(),
+                        "angkaantrean" => (int)$angkaantrean,
                         "namapoli" => $row->namapoli,
-                        "namadokter" => $row->namadokter
+                        "sisaantrean" => $row->sisaantrean,
+                        "antreanpanggil" => $row->kodepolihuruf.$row->antreanpanggil,
+                        "keterangan" => $row->keterangan
                     ];
                     
                     EX::response($response, "OK", 200);
@@ -138,7 +145,7 @@ elseif (isset($data->username) && isset($data->token)) {
                     $db = null;
                     
                 } else {
-                    EX::response(NULL, "Data tidak ditemukan", 202);
+                    EX::response(NULL, "Autentikasi gagal: username atau token salah", 202);
                 }	
             
             } catch(PDOException $e) {
