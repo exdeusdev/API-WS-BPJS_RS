@@ -21,7 +21,7 @@ $MYSQL_HOST		    = 'localhost';  // IP atau localhost
 $MYSQL_PORT		    = '3306';       // MySQL Port
 $MYSQL_USER		    = 'root';       // MySQL Username
 $MYSQL_PASS		    = 'xzxzxzxz';   // MySQL Password
-$MYSQL_DB		    = 'ws-rs_bpjs'; // MySQL Database
+$MYSQL_DB		    = 'simrs_db'; // MySQL Database
 
 ?>
 ```
